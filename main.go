@@ -1,8 +1,11 @@
 package main
 
 import (
+	"os"
+
 	"github.com/andy-kajeke/goDemoApi/config"
-	"github.com/andy-kajeke/goDemoApi/models"
+	"github.com/andy-kajeke/goDemoApi/internal"
+	"github.com/andy-kajeke/goDemoApi/migrations"
 	"github.com/andy-kajeke/goDemoApi/routes"
 	"github.com/gin-gonic/gin"
 )
@@ -10,17 +13,21 @@ import (
 func main() {
 	r := gin.Default()
 
+	internal.LoadEnv()
+
 	config.ConnectDatabase()
 
-	config.DB.AutoMigrate(&models.User{})
+	migrations.MigrateModels()
+
+	//config.DB.AutoMigrate(&models.User{})
 
 	routes.UserRoutes(r)
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message": "Gin CRUD API is running",
+			"message": "Gin demo CRUD API is running",
 		})
 	})
 
-	r.Run(":8080")
+	r.Run(":" + os.Getenv("APP_PORT"))
 }

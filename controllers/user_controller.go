@@ -40,7 +40,10 @@ func GetUsers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": "success",
-		"data":   users,
+		"info": gin.H{
+			"code": 200,
+			"data": users,
+		},
 	})
 }
 

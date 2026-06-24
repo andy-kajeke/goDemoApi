@@ -1,0 +1,34 @@
+# Environment
+.env
+
+# Air
+.air.toml
+tmp/
+
+# Build output
+bin/
+dist/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Go
+vendor/
+coverage.out
+
+# Executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
