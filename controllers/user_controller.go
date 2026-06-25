@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/andy-kajeke/goDemoApi/config"
+	"github.com/andy-kajeke/goDemoApi/middleware"
 	"github.com/andy-kajeke/goDemoApi/models"
 	"github.com/gin-gonic/gin"
 )
@@ -12,24 +13,33 @@ func CreateUser(c *gin.Context) {
 	var user models.User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "failed",
-			"message": err.Error(),
+		c.JSON(http.StatusBadRequest, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    400,
+				Message: err.Error(),
+			},
 		})
 		return
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "failed",
-			"message": err.Error(),
+		c.JSON(http.StatusInternalServerError, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    500,
+				Message: err.Error(),
+			},
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"status": "success",
-		"data":   user,
+	c.JSON(http.StatusCreated, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code: 201,
+			Data: user,
+		},
 	})
 }
 
@@ -38,11 +48,12 @@ func GetUsers(c *gin.Context) {
 
 	config.DB.Find(&users)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"info": gin.H{
-			"code": 200,
-			"data": users,
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    200,
+			Message: "Users fetched successfully",
+			Data:    users,
 		},
 	})
 }
@@ -53,16 +64,23 @@ func GetUserByID(c *gin.Context) {
 	var user models.User
 
 	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"status":  "failed",
-			"message": "User not found",
+		c.JSON(http.StatusNotFound, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    404,
+				Message: "User not found invalid Id",
+			},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   user,
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    200,
+			Message: "User fetched successfully",
+			Data:    user,
+		},
 	})
 }
 
@@ -72,9 +90,12 @@ func UpdateUser(c *gin.Context) {
 	var user models.User
 
 	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"status":  "failed",
-			"message": "User not found",
+		c.JSON(http.StatusNotFound, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    404,
+				Message: "User not found invalid Id",
+			},
 		})
 		return
 	}
@@ -82,9 +103,12 @@ func UpdateUser(c *gin.Context) {
 	var input models.User
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "failed",
-			"message": err.Error(),
+		c.JSON(http.StatusBadRequest, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    400,
+				Message: err.Error(),
+			},
 		})
 		return
 	}
@@ -96,9 +120,13 @@ func UpdateUser(c *gin.Context) {
 
 	config.DB.Save(&user)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   user,
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    200,
+			Message: "User record updated successfully",
+			Data:    user,
+		},
 	})
 }
 
@@ -108,17 +136,23 @@ func DeleteUser(c *gin.Context) {
 	var user models.User
 
 	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"status":  "failed",
-			"message": "User not found",
+		c.JSON(http.StatusNotFound, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    404,
+				Message: "User not found invalid Id",
+			},
 		})
 		return
 	}
 
 	config.DB.Delete(&user)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "success",
-		"message": "User deleted successfully",
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    404,
+			Message: "User deleted successfully",
+		},
 	})
 }
