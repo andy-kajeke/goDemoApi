@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/andy-kajeke/goDemoApi/config"
+	"github.com/andy-kajeke/goDemoApi/middleware"
 	"github.com/andy-kajeke/goDemoApi/models"
 	"github.com/gin-gonic/gin"
 )
@@ -12,33 +13,32 @@ func CreateProduct(c *gin.Context) {
 	var product models.Product
 
 	if err := c.ShouldBindJSON(&product); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": "failed",
-			"info": gin.H{
-				"code":    400,
-				"message": err.Error(),
+		c.JSON(http.StatusBadRequest, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    400,
+				Message: err.Error(),
 			},
 		})
 		return
 	}
 
 	if err := config.DB.Create(&product).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status": "failed",
-			"info": gin.H{
-				"code":    500,
-				"message": err.Error(),
+		c.JSON(http.StatusInternalServerError, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    500,
+				Message: err.Error(),
 			},
-			"message": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"status": "success",
-		"info": gin.H{
-			"code": 201,
-			"data": product,
+	c.JSON(http.StatusCreated, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code: 201,
+			Data: product,
 		},
 	})
 }
@@ -48,11 +48,12 @@ func GetProducts(c *gin.Context) {
 
 	config.DB.Find(&products)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"info": gin.H{
-			"code": 200,
-			"data": products,
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    200,
+			Message: "Products fetched successfully",
+			Data:    products,
 		},
 	})
 }
@@ -62,21 +63,22 @@ func GetProductByID(c *gin.Context) {
 	var product models.Product
 
 	if err := config.DB.First(&product, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"status": "failed",
-			"info": gin.H{
-				"code":    404,
-				"message": "Product not found invalid Id",
+		c.JSON(http.StatusNotFound, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    404,
+				Message: "Product not found invalid Id",
 			},
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"info": gin.H{
-			"code": 200,
-			"data": product,
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    200,
+			Message: "Product fetched successfully",
+			Data:    product,
 		},
 	})
 }
@@ -87,11 +89,11 @@ func UpdateProduct(c *gin.Context) {
 	var product models.Product
 
 	if err := config.DB.First(&product, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"status": "failed",
-			"info": gin.H{
-				"code":    404,
-				"message": "Product not found invalid Id",
+		c.JSON(http.StatusNotFound, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    404,
+				Message: "Product not found invalid Id",
 			},
 		})
 		return
@@ -100,11 +102,11 @@ func UpdateProduct(c *gin.Context) {
 	var input models.Product
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status": "failed",
-			"info": gin.H{
-				"code":    400,
-				"message": err.Error(),
+		c.JSON(http.StatusBadRequest, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    400,
+				Message: err.Error(),
 			},
 		})
 		return
@@ -118,11 +120,12 @@ func UpdateProduct(c *gin.Context) {
 
 	config.DB.Save(&product)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"info": gin.H{
-			"code": 201,
-			"data": product,
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    200,
+			Message: "Product record updated successfully",
+			Data:    product,
 		},
 	})
 }
@@ -133,11 +136,11 @@ func DeleteProduct(c *gin.Context) {
 	var product models.Product
 
 	if err := config.DB.First(&product, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"status": "failed",
-			"info": gin.H{
-				"code":    404,
-				"message": "Product not found invalid Id",
+		c.JSON(http.StatusNotFound, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    404,
+				Message: "Product not found invalid Id",
 			},
 		})
 		return
@@ -145,11 +148,11 @@ func DeleteProduct(c *gin.Context) {
 
 	config.DB.Delete(&product)
 
-	c.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"info": gin.H{
-			"code":    200,
-			"message": "Product deleted successfully",
+	c.JSON(http.StatusOK, middleware.APIResponse{
+		Status: "Success",
+		Info: middleware.ResponseInfo{
+			Code:    404,
+			Message: "Product deleted successfully",
 		},
 	})
 }
