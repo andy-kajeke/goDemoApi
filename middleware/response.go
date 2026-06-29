@@ -11,3 +11,11 @@ type ResponseInfo struct {
 	Pagination interface{} `json:"pagination,omitempty"`
 	Data       interface{} `json:"data,omitempty"`
 }
+
+type ResponsePagination struct {
+	Page        int   `json:"page"`
+	Limit       int   `json:"limit"`
+	Total       int64 `json:"total"`
+	TotalPages  int   `json:"totalPages"`
+	HasNextPage bool  `json:"hasNextPage"`
+}

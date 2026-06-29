@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/andy-kajeke/goDemoApi/config"
 	"github.com/andy-kajeke/goDemoApi/middleware"
@@ -44,16 +45,81 @@ func CreateUser(c *gin.Context) {
 }
 
 func GetUsers(c *gin.Context) {
-	var users []models.User
+	page := c.GetInt("page")
+	limit := c.GetInt("limit")
+	offset := c.GetInt("offset")
+	search := strings.TrimSpace(c.GetString("search"))
 
-	config.DB.Find(&users)
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	var users []models.User
+	var total int64
+	query := config.DB.Model(&models.User{})
+
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where("name ILIKE ? OR email ILIKE ? OR username ILIKE ?", searchPattern, searchPattern, searchPattern)
+	}
+
+	startDate, hasStartDate := c.Get("startDate")
+	endDate, hasEndDate := c.Get("endDate")
+
+	if hasStartDate && hasEndDate {
+		query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+	} else if hasStartDate {
+		query = query.Where("created_at >= ?", startDate)
+	} else if hasEndDate {
+		query = query.Where("created_at <= ?", endDate)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    500,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	if err := query.
+		Select("id", "created_at", "updated_at", "name", "email", "phone", "username").
+		Order("created_at DESC, id DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    500,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
 
 	c.JSON(http.StatusOK, middleware.APIResponse{
 		Status: "Success",
 		Info: middleware.ResponseInfo{
 			Code:    200,
 			Message: "Users fetched successfully",
-			Data:    users,
+			Pagination: middleware.ResponsePagination{
+				Page:        page,
+				Limit:       limit,
+				Total:       total,
+				TotalPages:  totalPages,
+				HasNextPage: total > int64(page*limit),
+			},
+			Data: users,
 		},
 	})
 }

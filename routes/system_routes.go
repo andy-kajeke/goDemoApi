@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/andy-kajeke/goDemoApi/controllers"
+	"github.com/andy-kajeke/goDemoApi/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,7 +12,7 @@ func SystemRoutes(r *gin.Engine) {
 	userRoutes := r.Group(base_url + "/users")
 	{
 		userRoutes.POST("/", controllers.CreateUser)
-		userRoutes.GET("/", controllers.GetUsers)
+		userRoutes.GET("/", middleware.QueryMiddleware(), controllers.GetUsers)
 		userRoutes.GET("/:id", controllers.GetUserByID)
 		userRoutes.PUT("/:id", controllers.UpdateUser)
 		userRoutes.DELETE("/:id", controllers.DeleteUser)
@@ -20,7 +21,7 @@ func SystemRoutes(r *gin.Engine) {
 	productRoutes := r.Group(base_url + "/products")
 	{
 		productRoutes.POST("/", controllers.CreateProduct)
-		productRoutes.GET("/", controllers.GetProducts)
+		productRoutes.GET("/", middleware.QueryMiddleware(), controllers.GetProducts)
 		productRoutes.GET("/:id", controllers.GetProductByID)
 		productRoutes.PUT("/:id", controllers.UpdateProduct)
 		productRoutes.DELETE("/:id", controllers.DeleteProduct)

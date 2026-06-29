@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/andy-kajeke/goDemoApi/config"
 	"github.com/andy-kajeke/goDemoApi/middleware"
@@ -44,16 +45,83 @@ func CreateProduct(c *gin.Context) {
 }
 
 func GetProducts(c *gin.Context) {
-	var products []models.Product
+	page := c.GetInt("page")
+	limit := c.GetInt("limit")
+	offset := c.GetInt("offset")
+	search := strings.TrimSpace(c.GetString("search"))
 
-	config.DB.Find(&products)
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	var products []models.Product
+	var total int64
+	query := config.DB.Model(&models.Product{})
+
+	if search != "" {
+		searchPattern := "%" + search + "%"
+		query = query.Where("name ILIKE ? OR price ILIKE ?", searchPattern, searchPattern)
+	}
+
+	startDate, hasStartDate := c.Get("startDate")
+	endDate, hasEndDate := c.Get("endDate")
+
+	if hasStartDate && hasEndDate {
+		query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+	} else if hasStartDate {
+		query = query.Where("created_at >= ?", startDate)
+	} else if hasEndDate {
+		query = query.Where("created_at <= ?", endDate)
+	}
+
+	if err := query.
+		Select("id", "created_at", "updated_at", "name", "openingStock", "lowStockAlert", "price", "description").
+		Order("created_at DESC, id DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&products).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    500,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	totalPages := int((total + int64(limit) - 1) / int64(limit))
+
+	if err := query.Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, middleware.APIResponse{
+			Status: "Failed",
+			Info: middleware.ResponseInfo{
+				Code:    500,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	//config.DB.Find(&products)
 
 	c.JSON(http.StatusOK, middleware.APIResponse{
 		Status: "Success",
 		Info: middleware.ResponseInfo{
 			Code:    200,
 			Message: "Products fetched successfully",
-			Data:    products,
+			Pagination: middleware.ResponsePagination{
+				Page:        page,
+				Limit:       limit,
+				Total:       total,
+				TotalPages:  totalPages,
+				HasNextPage: total > int64(page*limit),
+			},
+			Data: products,
 		},
 	})
 }
